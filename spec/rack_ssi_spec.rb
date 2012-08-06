@@ -40,4 +40,35 @@ describe Rack::SSI do
     end
   
   end
+  
+  describe "#process_block" do
+    it "should yield block directives and strip them out of the html" do
+      html = <<-eos
+        <html>
+          <body>
+            <!--# block name="shush" --><!--# endblock -->
+            <p>some content</p>
+            <!--# block name="shouty" --><h1>ERROR!</h1><!--# endblock -->
+          </body>
+        </html>
+      eos
+      
+      expected = <<-eos.gsub /\s+/, ""
+        <html>
+          <body>
+            <p>some content</p>
+          </body>
+        </html>
+      eos
+     
+      rack_ssi = Rack::SSI.new(nil)
+      blocks = []
+
+      processed = rack_ssi.process_block(html) {|block| blocks << block}
+
+      processed.gsub(/\s+/, "").should == expected
+      blocks.should == [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]      
+    end
+  end
+  
 end

@@ -25,23 +25,28 @@ module Rack
       
       blocks = {}
       body.map do |part|
-        
-        # <!--# block name="joe_the_block" -->Oh dear!<!--# endblock -->
-        part.gsub!(/<!--# block\s+name="(\w+)"\s+-->(.*?)<!--#\s+endblock\s+-->/) do
-          blocks[$1] = $2
-          ""
-        end
-        
-        # <!--# include virtual="/boiler-cover/application/status" stub="shush" -->
-        part.gsub!(/<!--#\s+include\s+(?:virtual|file)="([^"]+)"(?:\s+stub="(\w+)")?\s+-->/) do
-          ssi_include($1) || ($2 && blocks[$2]) || "Error fetching $1 SSI include"
-        end
-        
+        process_block(part) {|name, content| blocks[name] = content}
+        process_include(part, blocks)
         part
       end
     end
     
-    def ssi_include(location)
+    def process_block(part)
+      # <!--# block name="joe_the_block" -->Oh dear!<!--# endblock -->
+      part.gsub(/<!--# block\s+name="(\w+)"\s+-->(.*?)<!--#\s+endblock\s+-->/) do
+        yield [$1,$2]
+        ""
+      end
+    end
+    
+    def process_include!(part, blocks)
+      # <!--# include virtual="/boiler-cover/application/status" stub="shush" -->
+      part.gsub!(/<!--#\s+include\s+(?:virtual|file)="([^"]+)"(?:\s+stub="(\w+)")?\s+-->/) do
+        fetch($1) || ($2 && blocks[$2]) || "Error fetching $1 SSI include"
+      end
+    end
+    
+    def fetch(location)
       @options[:locations].select{|k,v| k.is_a?(String)}.each do |pattern, host|
         return fetch("#{host}#{location}") if pattern == location
       end
