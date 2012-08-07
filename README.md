@@ -27,7 +27,8 @@ Or install it yourself as:
       use Rack::SSI, {
         :logging => :on,
         :locations => {
-          %r{^/includes} => "http://includes.mydomain.com"
+          '/foo'  => "http://foo.com"
+          %r{^/bar} => "http://bar.com"
         }
       }
     end
