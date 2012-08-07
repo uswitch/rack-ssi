@@ -1,6 +1,6 @@
 # Rack::SSI
 
-Rack middleware for processing SSI based on nginx HttpSsiModule.
+Rack middleware for processing SSI based on the [nginx HttpSsiModule](http://wiki.nginx.org/HttpSsiModule).
 Directives currently supported: 'block' and 'include'
 
 ## Installation

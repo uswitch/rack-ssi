@@ -5,10 +5,10 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Thibaut Sacreste"]
   gem.email         = ["thibaut.sacreste@gmail.com"]
   gem.description   = <<-EOS
-    Rack middleware for processing SSI based on nginx HttpSsiModule.
+    Rack middleware for processing SSI based on the nginx HttpSsiModule.
     Directives currently supported: 'block' and 'include'
   EOS
-  gem.summary       = "Rack middleware for processing SSI based on nginx HttpSsiModule."
+  gem.summary       = "Rack middleware for processing SSI based on the nginx HttpSsiModule."
   gem.homepage      = "https://github.com/forward/rack-ssi"
 
   gem.files         = `git ls-files`.split($\)
