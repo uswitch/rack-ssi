@@ -1,3 +1,5 @@
+require 'rest_client'
+
 module Rack
   class SSI
     
@@ -22,37 +24,45 @@ module Rack
     def process(body)
       # see http://wiki.nginx.org/HttpSsiModule
       # currently only supporting 'block' and 'include' directives
-      
       blocks = {}
       body.map do |part|
-        process_block(part) {|name, content| blocks[name] = content}
-        process_include(part, blocks)
-        part
+        new_part = process_block(part) {|name, content| blocks[name] = content}
+        process_include(new_part, blocks)
       end
     end
     
     def process_block(part)
-      # <!--# block name="joe_the_block" -->Oh dear!<!--# endblock -->
       part.gsub(/<!--# block\s+name="(\w+)"\s+-->(.*?)<!--#\s+endblock\s+-->/) do
         yield [$1,$2]
         ""
       end
     end
     
-    def process_include!(part, blocks)
-      # <!--# include virtual="/boiler-cover/application/status" stub="shush" -->
-      part.gsub!(/<!--#\s+include\s+(?:virtual|file)="([^"]+)"(?:\s+stub="(\w+)")?\s+-->/) do
-        fetch($1) || ($2 && blocks[$2]) || "Error fetching $1 SSI include"
+    def process_include(part, blocks)
+      part.gsub(/<!--#\s+include\s+(?:virtual|file)="([^"]+)"(?:\s+stub="(\w+)")?\s+-->/) do
+        location, stub = $1, $2
+        status, _, body = fetch location
+        if stub && (status != 200 || body.nil? || body == "")
+          blocks[stub] 
+        else
+          body
+        end
       end
     end
     
     def fetch(location)
       @options[:locations].select{|k,v| k.is_a?(String)}.each do |pattern, host|
-        return fetch("#{host}#{location}") if pattern == location
+        return _get("#{host}#{location}") if location == pattern
       end
-      @options[:locations].select{|k,v| k.is_a?(Regex)}.each do |pattern, host|
-        return fetch("#{host}#{location}") if location =~ pattern
+      @options[:locations].select{|k,v| k.is_a?(Regexp)}.each do |pattern, host|
+        return _get("#{host}#{location}") if location =~ pattern
       end
+    end
+    
+    private
+    
+    def _get(url)
+      RestClient.get(url){|response, request, result| [response.code, response.headers, response.body]}
     end
 
   end

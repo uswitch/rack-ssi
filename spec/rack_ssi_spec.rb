@@ -71,4 +71,167 @@ describe Rack::SSI do
     end
   end
   
+  describe "#process_include" do
+    context "the SSI include request returns a valid response" do
+      it "should replace include directives with appropriate content" do
+        html = <<-eos
+          <html>
+            <body>
+              <!--# include virtual="/some/location" -->
+              <!--# include virtual="/some/other/location" -->
+            </body>
+          </html>
+        eos
+      
+        expected = <<-eos.gsub /\s+/, ""
+          <html>
+            <body>
+              <p>some content</p>
+              <p>some more content</p>
+            </body>
+          </html>
+        eos
+     
+        rack_ssi = Rack::SSI.new(nil)
+        rack_ssi.stub(:fetch).with("/some/location").and_return([200, {}, "<p>some content</p>"])
+        rack_ssi.stub(:fetch).with("/some/other/location").and_return([200, {}, "<p>some more content</p>"])
+
+        processed = rack_ssi.process_include(html, {})
+
+        processed.gsub(/\s+/, "").should == expected
+      end
+    end
+    
+    context "the SSI include request returns an empty response" do
+      it "should replace include directives with the content of the block specified by the 'stub' parameter" do
+        html = <<-eos
+          <html>
+            <body>
+              <!--# include virtual="/some/broken/location" stub="oops" -->
+            </body>
+          </html>
+        eos
+      
+        expected = <<-eos.gsub /\s+/, ""
+          <html>
+            <body>
+              <p>oops, something went wrong!</p>
+            </body>
+          </html>
+        eos
+     
+        rack_ssi = Rack::SSI.new(nil)
+        rack_ssi.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
+
+        processed = rack_ssi.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
+
+        processed.gsub(/\s+/, "").should == expected
+      end
+      
+      it "should replace include directives with the empty response if no 'stub' parameter" do
+        html = <<-eos
+          <html>
+            <body>
+              <!--# include virtual="/some/broken/location" -->
+            </body>
+          </html>
+        eos
+        
+        rack_ssi = Rack::SSI.new(nil)
+        rack_ssi.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
+
+        processed = rack_ssi.process_include(html, {})
+
+        processed.gsub(/\s+/, "").should == "<html><body></body></html>"
+      end
+    end
+    
+    context "the SSI include request returns an error response" do
+      it "should replace include directives with the content of the block specified by the 'stub' parameter" do
+        html = <<-eos
+          <html>
+            <body>
+              <!--# include virtual="/some/broken/location" stub="oops" -->
+            </body>
+          </html>
+        eos
+      
+        expected = <<-eos.gsub /\s+/, ""
+          <html>
+            <body>
+              <p>oops, something went wrong!</p>
+            </body>
+          </html>
+        eos
+     
+        rack_ssi = Rack::SSI.new(nil)
+        rack_ssi.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<crap>"])
+
+        processed = rack_ssi.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
+
+        processed.gsub(/\s+/, "").should == expected
+      end
+      
+      it "should replace include directives with the error response if no 'stub' parameter" do
+        html = <<-eos
+          <html>
+            <body>
+              <!--# include virtual="/some/broken/location" -->
+            </body>
+          </html>
+        eos
+        
+        rack_ssi = Rack::SSI.new(nil)
+        rack_ssi.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<bang>"])
+
+        processed = rack_ssi.process_include(html, {})
+
+        processed.gsub(/\s+/, "").should == "<html><body><bang></body></html>"
+      end
+    end
+    
+  end
+  
+  describe "#fetch" do
+    it "should resolve locations by exact match first" do
+      rack_ssi = Rack::SSI.new(nil, {
+        :locations => {
+          /\/pants/ => "http://host1",
+          "/pants" => "http://host2"
+        }
+      })
+      RestClient.should_receive(:get).with("http://host2/pants")
+      rack_ssi.fetch("/pants")      
+    end
+    
+    it "should resolve locations by regex if no exact match" do
+      rack_ssi = Rack::SSI.new(nil, {
+        :locations => {
+          /^\/pants\/.*/ => "http://host1",
+          "/pants" => "http://host2"
+        }
+      })
+      RestClient.should_receive(:get).with("http://host1/pants/on/fire")
+      rack_ssi.fetch("/pants/on/fire")      
+    end
+  end
+  
+  describe "#process" do
+    it "should do it all!" do
+      app = double
+      body = [
+        '<html><body>',
+        '<!--# block name="shouty" --><p>ERROR!</p><!--# endblock -->',
+        '<!--# include virtual="/includes/broken" stub="shouty" -->',
+        '<!--# include virtual="/includes/header" -->',
+        '</body></html>'
+      ]
+      rack_ssi = Rack::SSI.new(app)
+      rack_ssi.stub(:fetch).with("/includes/broken").and_return([500, {}, "<p>pants!</p>"])
+      rack_ssi.stub(:fetch).with("/includes/header").and_return([200, {}, "<h1>Hello</h1>"])
+      
+      rack_ssi.process(body).join.should == "<html><body><p>ERROR!</p><h1>Hello</h1></body></html>"
+    end
+  end
+  
 end

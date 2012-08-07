@@ -14,4 +14,5 @@ Gem::Specification.new do |gem|
   gem.name          = "rack-ssi"
   gem.require_paths = ["lib"]
   gem.version       = Rack::SSI::VERSION
+  gem.add_dependency "rest-client"
 end
