@@ -20,6 +20,17 @@ Or install it yourself as:
 ## Usage
 
     require 'rack_ssi'
+    
+### Sinatra
+
+    configure :development do
+      use Rack::SSI, {
+        :logging => :on,
+        :locations => {
+          %r{^/includes} => "http://includes.mydomain.com"
+        }
+      }
+    end
 
 ## Contributing
 
