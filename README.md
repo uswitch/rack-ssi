@@ -1,6 +1,7 @@
 # Rack::SSI
 
-TODO: Write a gem description
+Rack middleware for processing SSI based on nginx HttpSsiModule.
+Directives currently supported: 'block' and 'include'
 
 ## Installation
 

@@ -4,8 +4,11 @@ require File.expand_path('../lib/rack_ssi', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Thibaut Sacreste"]
   gem.email         = ["thibaut.sacreste@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = <<-EOS
+    Rack middleware for processing SSI based on nginx HttpSsiModule.
+    Directives currently supported: 'block' and 'include'
+  EOS
+  gem.summary       = "Rack middleware for processing SSI based on nginx HttpSsiModule."
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($\)
