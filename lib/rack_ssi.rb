@@ -19,7 +19,7 @@ module Rack
       unprocessed = [status, headers, body]
       
       return unprocessed unless @predicate.call(env)
-      return unprocessed unless headers["Content-Type"].include?("text/html")
+      return unprocessed unless headers["Content-Type"] && headers["Content-Type"].include?("text/html")
       return unprocessed unless status == 200
       
       ssi = Rack::SSIProcessor.new
