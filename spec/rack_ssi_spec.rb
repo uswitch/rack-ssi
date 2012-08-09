@@ -1,5 +1,27 @@
 describe Rack::SSI do
   describe "#call" do
+
+    it "should not process response if the when predicate returns false" do
+      app = double
+      body = ["I am a response"]      
+      app.stub(:call).and_return([200, {"Content-Type" => ["text/html"]}, body])
+      rack_ssi = Rack::SSI.new(app, :when => lambda {|env| false })
+      
+      Rack::SSIProcessor.any_instance.should_not_receive(:process).with(body).once.and_return([""])      
+      
+      rack_ssi.call({})
+    end
+
+    it "should process response if the when predicate returns true" do
+      app = double
+      body = ["I am a response"]      
+      app.stub(:call).and_return([200, {"Content-Type" => ["text/html"]}, body])
+      rack_ssi = Rack::SSI.new(app, :when => lambda {|env| true })
+      
+      Rack::SSIProcessor.any_instance.should_receive(:process).with(body).once.and_return([""])
+      
+      rack_ssi.call({})
+    end
   
     it "should process html responses only" do
       app = double
