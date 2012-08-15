@@ -7,7 +7,7 @@ describe Rack::SSI do
       app.stub(:call).and_return([200, {"Content-Type" => ["text/html"]}, body])
       rack_ssi = Rack::SSI.new(app, :when => lambda {|env| false })
       
-      Rack::SSIProcessor.any_instance.should_not_receive(:process).with(body).once.and_return([""])      
+      Rack::SSIProcessor.any_instance.should_not_receive(:process).and_return([""])
       
       rack_ssi.call({})
     end

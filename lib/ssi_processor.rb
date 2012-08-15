@@ -7,10 +7,12 @@ module Rack
       # see http://wiki.nginx.org/HttpSsiModule
       # currently only supporting 'block' and 'include' directives
       blocks = {}
-      body.map do |part|
+      output = []
+      body.each do |part|
         new_part = process_block(part) {|name, content| blocks[name] = content}
-        process_include(new_part, blocks)
+        output << process_include(new_part, blocks)
       end
+      output
     end
     
     def process_block(part)
