@@ -24,11 +24,19 @@ module Rack
       
       ssi = Rack::SSIProcessor.new
       ssi.locations = @locations
-      ssi.logger = env['rack.logger'] if @logging        
+      ssi.logger = logger(env) if @logging
       new_body = ssi.process(body)      
       headers["Content-Length"] = (new_body.reduce(0) {|sum, part| sum + part.bytesize}).to_s
 
       [status, headers, new_body]
+    end
+    
+    private
+    def logger(env)
+      if defined?(Rails)
+        return Rails.logger
+      end
+      env['rack.logger']
     end
 
   end
