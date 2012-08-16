@@ -26,9 +26,9 @@ Or install it yourself as:
     configure do
       use Rack::SSI, {
         :logging => :on,
-        :when => lambda {|env| not env['HTTP_X_USWITCH_SSI'] == 'ON'},
+        :when => lambda {|env| not env['SOME_CUSTOM_HEADER'] == 'ON'},
         :locations => {
-          %r{^/includes} => "http://uswitch-includes.uswitchinternal.com"
+          %r{^/includes} => "http://includes.mydomain.com"
         }
       }
     end
