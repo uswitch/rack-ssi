@@ -1,7 +1,7 @@
 # Rack::SSI
 
 Rack middleware for processing SSI based on the [nginx HttpSsiModule](http://wiki.nginx.org/HttpSsiModule).
-Directives currently supported: 'block' and 'include'
+Directives currently supported: `block` and `include`
 
 ## Installation
 
@@ -23,15 +23,19 @@ Or install it yourself as:
     
 ### Sinatra
 
-    configure :development do
+    configure do
       use Rack::SSI, {
         :logging => :on,
+        :when => lambda {|env| not env['HTTP_X_USWITCH_SSI'] == 'ON'},
         :locations => {
-          '/foo'  => "http://foo.com"
-          %r{^/bar} => "http://bar.com"
+          %r{^/includes} => "http://uswitch-includes.uswitchinternal.com"
         }
       }
     end
+    
+### Rails
+
+    config.middleware.use Rack::SSI, { ... }    
 
 ## Contributing
 
