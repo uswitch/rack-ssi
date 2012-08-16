@@ -1,0 +1,1 @@
+require File.expand_path('../../lib/rack_ssi', __FILE__)
