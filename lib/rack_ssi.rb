@@ -5,8 +5,6 @@ require 'logger'
 module Rack
   class SSI
     
-    VERSION = "0.0.2"
-    
     def initialize(app, options = {})
       @app = app
       @logging = options[:logging] == :on

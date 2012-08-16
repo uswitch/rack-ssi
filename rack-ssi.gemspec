@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-require File.expand_path('../lib/rack_ssi', __FILE__)
 
 Gem::Specification.new do |gem|
   gem.authors       = ["Thibaut Sacreste"]
@@ -16,6 +15,6 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "rack_ssi"
   gem.require_paths = ["lib"]
-  gem.version       = Rack::SSI::VERSION
+  gem.version       = "0.0.2"
   gem.add_dependency "rest-client"
 end
