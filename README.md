@@ -7,7 +7,7 @@ Directives currently supported: `block` and `include`
 
 Add this line to your application's Gemfile:
 
-    gem 'rack_ssi', :git => "git@github.com:forward/rack-ssi.git"
+    gem 'rack_ssi'
 
 And then execute:
 
