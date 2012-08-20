@@ -16,7 +16,7 @@ module Rack
     end
     
     def process_block(part)
-      part.gsub(/<!--# block\s+name="(\w+)"\s+-->(.*?)<!--#\s+endblock\s+-->/) do
+      part.gsub(/<!--#\s+block\s+name="(\w+)"\s+-->(.*?)<!--#\s+endblock\s+-->/) do
         name, content = $1, $2
         _info "processing block directive with name=#{name}"
         yield [name, content]
