@@ -22,18 +22,18 @@ Or install it yourself as:
     require 'rack_ssi'
     
 ### Sinatra
-
-    configure do
-      use Rack::SSI, {
-        :logging => :on,
-        :when => lambda {|env| not env['SOME_CUSTOM_HEADER'] == 'ON'},
-        :locations => {
-          %r{^/includes} => "http://includes.mydomain.com"
-        }
-      }
-    end
-    
+```ruby
+configure do
+  use Rack::SSI, {
+    :logging => :on,
+    :when => lambda {|env| not env['SOME_CUSTOM_HEADER'] == 'ON'},
+    :locations => {
+      %r{^/includes} => "http://includes.mydomain.com"
+    }
+  }
+end
+```    
 ### Rails
-
-    config.middleware.use Rack::SSI, { ... }    
-
+```ruby
+config.middleware.use Rack::SSI, { ... }    
+```
