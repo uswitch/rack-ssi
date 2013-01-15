@@ -37,3 +37,15 @@ end
 ```ruby
 config.middleware.use Rack::SSI, { ... }    
 ```
+
+#### Haml
+
+To use includes in your HAML, the following should work ok:
+
+```ruby
+!!!
+%html{:xmlns => "http://www.w3.org/1999/xhtml"}
+  %head
+    %title My site
+      / #include file="tools/includes/header.html"
+```
