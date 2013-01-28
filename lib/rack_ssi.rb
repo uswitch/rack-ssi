@@ -1,4 +1,5 @@
-require File.expand_path('../ssi_processor', __FILE__)
+require 'compatibility'
+require 'ssi_processor'
 require 'rest_client'
 require 'logger'
 
