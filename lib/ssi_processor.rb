@@ -32,7 +32,7 @@ module Rack
         if stub && (status != 200 || body.nil? || body == "")
           blocks[stub] 
         else
-          body
+          body.force_encoding(part.encoding)
         end
       end
     end

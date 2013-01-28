@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 require File.expand_path('../spec_helper', __FILE__)
 
 describe Rack::SSIProcessor do
@@ -150,7 +152,32 @@ describe Rack::SSIProcessor do
         processed.gsub(/\s+/, "").should == "<html><body><bang></body></html>"
       end
     end
-    
+
+    context "the SSI include request returns a response with a different encoding than the context" do
+      it "should force the encoding of the context" do
+        html = <<-eos
+          <html>
+            <body>
+              <!--# include virtual="/some/location" -->
+            </body>
+          </html>
+        eos
+
+        expected = <<-eos.gsub /\s+/, ""
+          <html>
+            <body>
+              <p>€254</p>
+            </body>
+          </html>
+        eos
+
+        ssi = Rack::SSIProcessor.new
+        ssi.stub(:fetch).with("/some/location").and_return([200, {}, "<p>€254</p>".force_encoding("ASCII-8BIT")])
+
+        processed = ssi.process_include(html, {})
+        processed.gsub(/\s+/, "").should == expected
+      end
+    end
   end
   
   describe "#fetch" do
