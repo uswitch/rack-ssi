@@ -16,7 +16,7 @@ module Rack
     end
     
     def process_block(part)
-      part.gsub(/<!--\s?#\s+block\s+name="(\w+)"\s+-->(.*?)<!--\s?#\s+endblock\s+-->/) do
+      part.gsub(/<!--\s?#\s?block\s+name="(\w+)"\s+-->(.*?)<!--\s?#\s+endblock\s+-->/) do
         name, content = $1, $2
         _info "processing block directive with name=#{name}"
         yield [name, content]
@@ -25,7 +25,7 @@ module Rack
     end
     
     def process_include(part, blocks)
-      part.gsub(/<!--\s?#\s+include\s+(?:virtual|file)="([^"]+)"(?:\s+stub="(\w+)")?\s+-->/) do
+      part.gsub(/<!--\s?#\s?include\s+(?:virtual|file)="([^"]+)"(?:\s+stub="(\w+)")?\s+-->/) do
         location, stub = $1, $2
         _info "processing include directive with location=#{location}"
         status, _, body = fetch location

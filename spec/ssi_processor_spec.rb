@@ -36,7 +36,7 @@ describe Rack::SSIProcessor do
           <body>
             <!-- # block name="shush" --><!-- # endblock -->
             <p>some content</p>
-            <!-- # block name="shouty" --><h1>ERROR!</h1><!-- # endblock -->
+            <!-- #block name="shouty" --><h1>ERROR!</h1><!-- # endblock -->
           </body>
         </html>
       eos
@@ -93,6 +93,7 @@ describe Rack::SSIProcessor do
           <html>
             <body>
               <!-- # include virtual="/some/other/location_from_haml" -->
+              <!-- #include virtual="/some/other/location_from_haml" -->
             </body>
           </html>
         eos
@@ -100,6 +101,7 @@ describe Rack::SSIProcessor do
         expected = <<-eos.gsub /\s+/, ""
           <html>
             <body>
+              <p>some content from haml</p>
               <p>some content from haml</p>
             </body>
           </html>
