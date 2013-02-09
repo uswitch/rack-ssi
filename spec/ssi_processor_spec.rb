@@ -32,6 +32,33 @@ describe Rack::SSIProcessor do
       processed.gsub(/\s+/, "").should == expected
       blocks.should == [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]      
     end
+    it "should yield block directives and strip them out of the html from HAML responses" do
+      html = <<-eos
+        <html>
+          <body>
+            <!-- # block name="shush" --><!-- # endblock -->
+            <p>some content</p>
+            <!-- #block name="shouty" --><h1>ERROR!</h1><!-- # endblock -->
+          </body>
+        </html>
+      eos
+      
+      expected = <<-eos.gsub /\s+/, ""
+        <html>
+          <body>
+            <p>some content</p>
+          </body>
+        </html>
+      eos
+     
+      ssi = Rack::SSIProcessor.new
+      blocks = []
+
+      processed = ssi.process_block(html) {|block| blocks << block}
+
+      processed.gsub(/\s+/, "").should == expected
+      blocks.should == [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]      
+    end
   end
   
   describe "#process_include" do
@@ -58,6 +85,32 @@ describe Rack::SSIProcessor do
         ssi = Rack::SSIProcessor.new
         ssi.stub(:fetch).with("/some/location").and_return([200, {}, "<p>some content</p>"])
         ssi.stub(:fetch).with("/some/other/location").and_return([200, {}, "<p>some more content</p>"])
+
+        processed = ssi.process_include(html, {})
+
+        processed.gsub(/\s+/, "").should == expected
+      end
+      it "should replace include directives from HAML response with appropriate content" do
+        html = <<-eos
+          <html>
+            <body>
+              <!-- # include virtual="/some/other/location_from_haml" -->
+              <!-- #include virtual="/some/other/location_from_haml" -->
+            </body>
+          </html>
+        eos
+      
+        expected = <<-eos.gsub /\s+/, ""
+          <html>
+            <body>
+              <p>some content from haml</p>
+              <p>some content from haml</p>
+            </body>
+          </html>
+        eos
+     
+        ssi = Rack::SSIProcessor.new
+        ssi.stub(:fetch).with("/some/other/location_from_haml").and_return([200, {}, "<p>some content from haml</p>"])
 
         processed = ssi.process_include(html, {})
 
