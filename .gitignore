@@ -1,4 +1,5 @@
 .rbenv-version
+.ruby-version
 *.gem
 *.rbc
 .bundle
