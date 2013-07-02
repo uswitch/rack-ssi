@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
     Directives currently supported: 'block' and 'include'
   EOS
   gem.summary       = "Rack middleware for processing SSI based on the nginx HttpSsiModule."
-  gem.homepage      = "https://github.com/forward/rack-ssi"
+  gem.homepage      = "https://github.com/uswitch/rack-ssi"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
