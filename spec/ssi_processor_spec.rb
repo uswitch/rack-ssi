@@ -4,6 +4,11 @@ require File.expand_path('../spec_helper', __FILE__)
 
 describe Rack::SSIProcessor do
   
+  before :each do
+    env = double("env", :[] => "")
+    @processor = Rack::SSIProcessor.new(env)
+  end
+
   describe "#process_block" do
     it "should yield block directives and strip them out of the html" do
       html = <<-eos
@@ -24,10 +29,9 @@ describe Rack::SSIProcessor do
         </html>
       eos
      
-      ssi = Rack::SSIProcessor.new
       blocks = []
 
-      processed = ssi.process_block(html) {|block| blocks << block}
+      processed = @processor.process_block(html) {|block| blocks << block}
 
       processed.gsub(/\s+/, "").should == expected
       blocks.should == [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]      
@@ -51,10 +55,9 @@ describe Rack::SSIProcessor do
         </html>
       eos
      
-      ssi = Rack::SSIProcessor.new
       blocks = []
 
-      processed = ssi.process_block(html) {|block| blocks << block}
+      processed = @processor.process_block(html) {|block| blocks << block}
 
       processed.gsub(/\s+/, "").should == expected
       blocks.should == [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]      
@@ -82,11 +85,10 @@ describe Rack::SSIProcessor do
           </html>
         eos
      
-        ssi = Rack::SSIProcessor.new
-        ssi.stub(:fetch).with("/some/location").and_return([200, {}, "<p>some content</p>"])
-        ssi.stub(:fetch).with("/some/other/location").and_return([200, {}, "<p>some more content</p>"])
+        @processor.stub(:fetch).with("/some/location").and_return([200, {}, "<p>some content</p>"])
+        @processor.stub(:fetch).with("/some/other/location").and_return([200, {}, "<p>some more content</p>"])
 
-        processed = ssi.process_include(html, {})
+        processed = @processor.process_include(html, {})
 
         processed.gsub(/\s+/, "").should == expected
       end
@@ -109,10 +111,9 @@ describe Rack::SSIProcessor do
           </html>
         eos
      
-        ssi = Rack::SSIProcessor.new
-        ssi.stub(:fetch).with("/some/other/location_from_haml").and_return([200, {}, "<p>some content from haml</p>"])
+        @processor.stub(:fetch).with("/some/other/location_from_haml").and_return([200, {}, "<p>some content from haml</p>"])
 
-        processed = ssi.process_include(html, {})
+        processed = @processor.process_include(html, {})
 
         processed.gsub(/\s+/, "").should == expected
       end
@@ -136,10 +137,9 @@ describe Rack::SSIProcessor do
           </html>
         eos
      
-        ssi = Rack::SSIProcessor.new
-        ssi.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
+        @processor.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
 
-        processed = ssi.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
+        processed = @processor.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
 
         processed.gsub(/\s+/, "").should == expected
       end
@@ -153,10 +153,9 @@ describe Rack::SSIProcessor do
           </html>
         eos
         
-        ssi = Rack::SSIProcessor.new
-        ssi.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
+        @processor.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
 
-        processed = ssi.process_include(html, {})
+        processed = @processor.process_include(html, {})
 
         processed.gsub(/\s+/, "").should == "<html><body></body></html>"
       end
@@ -179,11 +178,10 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-     
-        ssi = Rack::SSIProcessor.new
-        ssi.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<crap>"])
 
-        processed = ssi.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
+        @processor.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<crap>"])
+
+        processed = @processor.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
 
         processed.gsub(/\s+/, "").should == expected
       end
@@ -196,11 +194,10 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-        
-        ssi = Rack::SSIProcessor.new
-        ssi.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<bang>"])
 
-        processed = ssi.process_include(html, {})
+        @processor.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<bang>"])
+
+        processed = @processor.process_include(html, {})
 
         processed.gsub(/\s+/, "").should == "<html><body><bang></body></html>"
       end
@@ -224,10 +221,9 @@ describe Rack::SSIProcessor do
           </html>
         eos
 
-        ssi = Rack::SSIProcessor.new
-        ssi.stub(:fetch).with("/some/location").and_return([200, {}, "<p>€254</p>".force_encoding("ASCII-8BIT")])
+        @processor.stub(:fetch).with("/some/location").and_return([200, {}, "<p>€254</p>".force_encoding("ASCII-8BIT")])
 
-        processed = ssi.process_include(html, {})
+        processed = @processor.process_include(html, {})
         processed.gsub(/\s+/, "").should == expected
       end
     end
@@ -235,25 +231,25 @@ describe Rack::SSIProcessor do
   
   describe "#fetch" do
     it "should resolve locations by exact match first" do
-      ssi = Rack::SSIProcessor.new
-      ssi.locations = {
+      @processor.locations = {
         /\/pants/ => "http://host1",
         "/pants" => "http://host2"
       }
       
-      RestClient.should_receive(:get).with("http://host2/pants")
-      ssi.fetch("/pants")      
+      HTTParty.stub(:get).and_return(double("response", code: 200, headers: [], body: ''))
+      HTTParty.should_receive(:get).with("http://host2/pants", anything)
+      @processor.fetch("/pants")      
+
     end
     
     it "should resolve locations by regex if no exact match" do
-      ssi = Rack::SSIProcessor.new
-      ssi.locations = {
+      @processor.locations = {
         /^\/pants\/.*/ => "http://host1",
         "/pants" => "http://host2"
       }
-      
-      RestClient.should_receive(:get).with("http://host1/pants/on/fire")
-      ssi.fetch("/pants/on/fire")      
+      HTTParty.stub(:get).and_return(double("response", code: 200, headers: [], body: ''))
+      HTTParty.should_receive(:get).with("http://host1/pants/on/fire", anything)
+      @processor.fetch("/pants/on/fire")      
     end
   end
   
@@ -266,11 +262,10 @@ describe Rack::SSIProcessor do
         '<!--# include virtual="/includes/header" -->',
         '</body></html>'
       ]
-      ssi = Rack::SSIProcessor.new
-      ssi.stub(:fetch).with("/includes/broken").and_return([500, {}, "<p>pants!</p>"])
-      ssi.stub(:fetch).with("/includes/header").and_return([200, {}, "<h1>Hello</h1>"])
+      @processor.stub(:fetch).with("/includes/broken").and_return([500, {}, "<p>pants!</p>"])
+      @processor.stub(:fetch).with("/includes/header").and_return([200, {}, "<h1>Hello</h1>"])
       
-      ssi.process(body).join.should == "<html><body><p>ERROR!</p><h1>Hello</h1></body></html>"
+      @processor.process(body).join.should == "<html><body><p>ERROR!</p><h1>Hello</h1></body></html>"
     end
   end
   

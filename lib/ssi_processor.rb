@@ -2,6 +2,10 @@ module Rack
   class SSIProcessor
     
     attr_accessor :logger, :locations
+
+    def initialize(env)
+      @env = env
+    end
     
     def process(body)
       # see http://wiki.nginx.org/HttpSsiModule
@@ -51,10 +55,9 @@ module Rack
     
     def _get(url)
       _info "fetching #{url}"
-      RestClient.get(url) do |response, request, result|
-        _error "error fetching #{url}: #{response.code} response" if response.code != 200
-        [response.code, response.headers, response.body]
-      end
+      response = HTTParty.get(url, headers: {'Cookie' => @env['HTTP_COOKIE']})
+      _error "error fetching #{url}: #{response.code} response" if response.code != 200
+      [response.code, response.headers, response.body]
     end
     
     def _info(message)

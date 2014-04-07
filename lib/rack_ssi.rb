@@ -1,6 +1,6 @@
 require 'compatibility'
 require 'ssi_processor'
-require 'rest_client'
+require 'httparty'
 require 'logger'
 
 module Rack
@@ -21,7 +21,7 @@ module Rack
       return unprocessed unless headers["Content-Type"] && headers["Content-Type"].include?("text/html")
       return unprocessed unless status == 200
       
-      ssi = Rack::SSIProcessor.new
+      ssi = Rack::SSIProcessor.new(env)
       ssi.locations = @locations
       ssi.logger = logger(env) if @logging
       new_body = ssi.process(body)      
