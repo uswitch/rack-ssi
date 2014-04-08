@@ -15,6 +15,6 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "rack_ssi"
   gem.require_paths = ["lib"]
-  gem.version       = "0.0.6"
+  gem.version       = "0.0.7"
   gem.add_dependency "httparty"
 end
