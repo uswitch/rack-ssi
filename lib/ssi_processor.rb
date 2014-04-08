@@ -56,7 +56,7 @@ module Rack
     def _get(url)
       _info "fetching #{url}"
       headers = @env['HTTP_COOKIE'] ? {'Cookie' => @env['HTTP_COOKIE']} : {}
-      response = HTTParty.get(url, headers: headers)
+      response = HTTParty.get(url, headers: headers, verify: false)
       _error "error fetching #{url}: #{response.code} response" if response.code != 200
       [response.code, response.headers, response.body]
     end
