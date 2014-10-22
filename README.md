@@ -47,5 +47,5 @@ To use includes in your HAML, the following should work ok:
 %html{:xmlns => "http://www.w3.org/1999/xhtml"}
   %head
     %title My site
-      / #include file="tools/includes/header.html"
+      / #include file="/includes/header.html"
 ```
