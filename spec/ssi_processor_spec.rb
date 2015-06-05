@@ -3,11 +3,11 @@
 require File.expand_path('../spec_helper', __FILE__)
 
 describe Rack::SSIProcessor do
-  
-  before :each do
-    env = double("env", :[] => "")
-    @processor = Rack::SSIProcessor.new(env)
-  end
+  let(:env) { double('env', :[] => '') }
+  let(:instance) { described_class.new(env, logger, options) }
+  let(:logger) {}
+  let(:options) { {headers: ->(*) { {} }, locations: locations} }
+  let(:locations) { {} }
 
   describe "#process_block" do
     it "should yield block directives and strip them out of the html" do
@@ -20,7 +20,7 @@ describe Rack::SSIProcessor do
           </body>
         </html>
       eos
-      
+
       expected = <<-eos.gsub /\s+/, ""
         <html>
           <body>
@@ -28,13 +28,13 @@ describe Rack::SSIProcessor do
           </body>
         </html>
       eos
-     
+
       blocks = []
 
-      processed = @processor.process_block(html) {|block| blocks << block}
+      processed = instance.process_block(html) {|block| blocks << block}
 
-      processed.gsub(/\s+/, "").should == expected
-      blocks.should == [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]      
+      expect(processed.gsub(/\s+/, "")).to eq expected
+      expect(blocks).to eq [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]
     end
     it "should yield block directives and strip them out of the html from HAML responses" do
       html = <<-eos
@@ -46,7 +46,7 @@ describe Rack::SSIProcessor do
           </body>
         </html>
       eos
-      
+
       expected = <<-eos.gsub /\s+/, ""
         <html>
           <body>
@@ -54,16 +54,16 @@ describe Rack::SSIProcessor do
           </body>
         </html>
       eos
-     
+
       blocks = []
 
-      processed = @processor.process_block(html) {|block| blocks << block}
+      processed = instance.process_block(html) {|block| blocks << block}
 
-      processed.gsub(/\s+/, "").should == expected
-      blocks.should == [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]      
+      expect(processed.gsub(/\s+/, "")).to eq expected
+      expect(blocks).to eq [["shush", ""], ["shouty", "<h1>ERROR!</h1>"]]
     end
   end
-  
+
   describe "#process_include" do
     context "the SSI include request returns a valid response" do
       it "should replace include directives with appropriate content" do
@@ -75,7 +75,7 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-      
+
         expected = <<-eos.gsub /\s+/, ""
           <html>
             <body>
@@ -84,13 +84,13 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-     
-        @processor.stub(:fetch).with("/some/location").and_return([200, {}, "<p>some content</p>"])
-        @processor.stub(:fetch).with("/some/other/location").and_return([200, {}, "<p>some more content</p>"])
 
-        processed = @processor.process_include(html, {})
+        allow(instance).to receive(:fetch).with("/some/location").and_return([200, {}, "<p>some content</p>"])
+        allow(instance).to receive(:fetch).with("/some/other/location").and_return([200, {}, "<p>some more content</p>"])
 
-        processed.gsub(/\s+/, "").should == expected
+        processed = instance.process_include(html, {})
+
+        expect(processed.gsub(/\s+/, "")).to eq expected
       end
       it "should replace include directives from HAML response with appropriate content" do
         html = <<-eos
@@ -101,7 +101,7 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-      
+
         expected = <<-eos.gsub /\s+/, ""
           <html>
             <body>
@@ -110,15 +110,15 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-     
-        @processor.stub(:fetch).with("/some/other/location_from_haml").and_return([200, {}, "<p>some content from haml</p>"])
 
-        processed = @processor.process_include(html, {})
+        allow(instance).to receive(:fetch).with("/some/other/location_from_haml").and_return([200, {}, "<p>some content from haml</p>"])
 
-        processed.gsub(/\s+/, "").should == expected
+        processed = instance.process_include(html, {})
+
+        expect(processed.gsub(/\s+/, "")).to eq expected
       end
     end
-    
+
     context "the SSI include request returns an empty response" do
       it "should replace include directives with the content of the block specified by the 'stub' parameter" do
         html = <<-eos
@@ -128,7 +128,7 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-      
+
         expected = <<-eos.gsub /\s+/, ""
           <html>
             <body>
@@ -136,14 +136,14 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-     
-        @processor.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
 
-        processed = @processor.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
+        allow(instance).to receive(:fetch).with("/some/broken/location").and_return([200, {}, ""])
 
-        processed.gsub(/\s+/, "").should == expected
+        processed = instance.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
+
+        expect(processed.gsub(/\s+/, "")).to eq expected
       end
-      
+
       it "should replace include directives with the empty response if no 'stub' parameter" do
         html = <<-eos
           <html>
@@ -152,15 +152,15 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-        
-        @processor.stub(:fetch).with("/some/broken/location").and_return([200, {}, ""])
 
-        processed = @processor.process_include(html, {})
+        allow(instance).to receive(:fetch).with("/some/broken/location").and_return([200, {}, ""])
 
-        processed.gsub(/\s+/, "").should == "<html><body></body></html>"
+        processed = instance.process_include(html, {})
+
+        expect(processed.gsub(/\s+/, "")).to eq "<html><body></body></html>"
       end
     end
-    
+
     context "the SSI include request returns an error response" do
       it "should replace include directives with the content of the block specified by the 'stub' parameter" do
         html = <<-eos
@@ -170,7 +170,7 @@ describe Rack::SSIProcessor do
             </body>
           </html>
         eos
-      
+
         expected = <<-eos.gsub /\s+/, ""
           <html>
             <body>
@@ -179,13 +179,13 @@ describe Rack::SSIProcessor do
           </html>
         eos
 
-        @processor.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<crap>"])
+        allow(instance).to receive(:fetch).with("/some/broken/location").and_return([500, {}, "<crap>"])
 
-        processed = @processor.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
+        processed = instance.process_include(html, {"oops" => "<p>oops, something went wrong!</p>"})
 
-        processed.gsub(/\s+/, "").should == expected
+        expect(processed.gsub(/\s+/, "")).to eq expected
       end
-      
+
       it "should replace include directives with the error response if no 'stub' parameter" do
         html = <<-eos
           <html>
@@ -195,11 +195,11 @@ describe Rack::SSIProcessor do
           </html>
         eos
 
-        @processor.stub(:fetch).with("/some/broken/location").and_return([500, {}, "<bang>"])
+        allow(instance).to receive(:fetch).with("/some/broken/location").and_return([500, {}, "<bang>"])
 
-        processed = @processor.process_include(html, {})
+        processed = instance.process_include(html, {})
 
-        processed.gsub(/\s+/, "").should == "<html><body><bang></body></html>"
+        expect(processed.gsub(/\s+/, "")).to eq "<html><body><bang></body></html>"
       end
     end
 
@@ -221,38 +221,57 @@ describe Rack::SSIProcessor do
           </html>
         eos
 
-        @processor.stub(:fetch).with("/some/location").and_return([200, {}, "<p>€254</p>".force_encoding("ASCII-8BIT")])
+        allow(instance).to receive(:fetch).with("/some/location").and_return([200, {}, "<p>€254</p>".force_encoding("ASCII-8BIT")])
 
-        processed = @processor.process_include(html, {})
-        processed.gsub(/\s+/, "").should == expected
+        processed = instance.process_include(html, {})
+        expect(processed.gsub(/\s+/, "")).to eq expected
       end
     end
   end
-  
-  describe "#fetch" do
-    it "should resolve locations by exact match first" do
-      @processor.locations = {
-        /\/pants/ => "http://host1",
-        "/pants" => "http://host2"
-      }
-      
-      HTTParty.stub(:get).and_return(double("response", code: 200, headers: [], body: ''))
-      HTTParty.should_receive(:get).with("http://host2/pants", anything)
-      @processor.fetch("/pants")      
 
+  describe "#fetch" do
+    context 'when locations contains mathcing string' do
+      let(:locations) { {
+        /\/shorts/ => 'http://host1',
+        '/pants' => 'http://host2'
+      } }
+
+      it 'resolves locations by exact match first' do
+        allow(HTTParty).to receive(:get).
+          and_return(double('response', code: 200, headers: [], body: ''))
+        expect(HTTParty).to receive(:get).with('http://host2/pants', anything)
+        instance.fetch('/pants')
+      end
     end
-    
-    it "should resolve locations by regex if no exact match" do
-      @processor.locations = {
-        /^\/pants\/.*/ => "http://host1",
-        "/pants" => "http://host2"
-      }
-      HTTParty.stub(:get).and_return(double("response", code: 200, headers: [], body: ''))
-      HTTParty.should_receive(:get).with("http://host1/pants/on/fire", anything)
-      @processor.fetch("/pants/on/fire")      
+
+    context 'when locations contains matching regex' do
+      let(:locations) { {
+        /^\/pants\/.*/ => 'http://host1',
+        '/pants' => 'http://host2'
+      } }
+
+      it 'resolves locations by regex if no exact match' do
+        allow(HTTParty).to receive(:get).
+          and_return(double('response', code: 200, headers: [], body: ''))
+        expect(HTTParty).to receive(:get).with('http://host1/pants/on/fire', anything)
+        instance.fetch('/pants/on/fire')
+      end
+    end
+
+    context 'when matching location provides proc' do
+      let(:locations) { {
+        /\/pants/ => ->(location) { "http://host1#{location.sub 'ant', 'ub'}"}
+      } }
+
+      it 'resolves locations by regex if no exact match' do
+        allow(HTTParty).to receive(:get).
+          and_return(double('response', code: 200, headers: [], body: ''))
+        expect(HTTParty).to receive(:get).with('http://host1/pubs/on/fire', anything)
+        instance.fetch('/pants/on/fire')
+      end
     end
   end
-  
+
   describe "#process" do
     it "should do it all!" do
       body = [
@@ -262,11 +281,12 @@ describe Rack::SSIProcessor do
         '<!--# include virtual="/includes/header" -->',
         '</body></html>'
       ]
-      @processor.stub(:fetch).with("/includes/broken").and_return([500, {}, "<p>pants!</p>"])
-      @processor.stub(:fetch).with("/includes/header").and_return([200, {}, "<h1>Hello</h1>"])
-      
-      @processor.process(body).join.should == "<html><body><p>ERROR!</p><h1>Hello</h1></body></html>"
+      expect(instance).to receive(:fetch).with("/includes/broken").
+        and_return([500, {}, "<p>pants!</p>"])
+      expect(instance).to receive(:fetch).with("/includes/header").
+        and_return([200, {}, "<h1>Hello</h1>"])
+
+      expect(instance.process(body).join).to eq "<html><body><p>ERROR!</p><h1>Hello</h1></body></html>"
     end
   end
-  
 end

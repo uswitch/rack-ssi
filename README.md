@@ -20,7 +20,7 @@ Or install it yourself as:
 ## Usage
 
     require 'rack_ssi'
-    
+
 ### Sinatra
 ```ruby
 configure do
@@ -28,14 +28,16 @@ configure do
     :logging => :on,
     :when => lambda {|env| not env['SOME_CUSTOM_HEADER'] == 'ON'},
     :locations => {
-      %r{^/includes} => "http://includes.mydomain.com"
-    }
+      %r{^/includes} => "http://includes.mydomain.com",
+      %r{\A/path/} => ->(location) { "http://host#{rewrite(location)}" },
+    },
+    headers: ->(env) { hash_of_headers(env) }, # by default bypasses Cookies
   }
 end
-```    
+```
 ### Rails
 ```ruby
-config.middleware.use Rack::SSI, { ... }    
+config.middleware.use Rack::SSI, { ... }
 ```
 
 #### Haml
