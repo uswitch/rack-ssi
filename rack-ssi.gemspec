@@ -17,4 +17,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = "0.0.8"
   gem.add_dependency "httparty"
+
+  gem.add_development_dependency "rake", '~> 10.4.2'
+  gem.add_development_dependency "rspec", '~> 3.2'
 end
