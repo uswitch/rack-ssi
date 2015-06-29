@@ -37,7 +37,7 @@ module Rack
     private
 
     def logger(env)
-      if defined?(Rails)
+      if defined?(Rails) && defined?(Rails.logger)
         Rails.logger
       else
         env['rack.logger']
